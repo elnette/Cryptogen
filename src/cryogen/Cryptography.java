@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +15,8 @@ import java.nio.file.Paths;
 /**
  * @author Zander Labuschagne
  * E-Mail: ZANDER.LABUSCHAGNE@PROTONMAIL.CH
+ * @author Elnette Moller
+ * E-Mail: elnette.moller@gmail.com
  * This class contains methods for the encryption and decryption of messages and files
  * Additional cryptosystems will be added
  * Copyright (C) 2017  Zander Labuschagne and Elnette Moller
@@ -60,7 +63,8 @@ public class Cryptography
      */
     public static void handleException(Exception ex, String title, String header, String content)
     {
-        ex.printStackTrace();
+        if(ex != null)
+            ex.printStackTrace();
         Alert error = new Alert(Alert.AlertType.ERROR, content);
         error.initModality(Modality.APPLICATION_MODAL);
         error.initOwner(null);
@@ -91,7 +95,31 @@ public class Cryptography
          */
         public static char[] encrypt(char[] plainText, char[] key)
         {
-            return null;
+            int a = plainText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            char[] cipher = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int) key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                int r = ((int)plainText[i]) + asck[c];
+
+                if(r > 126)
+                    r = 127 - r + 32;
+
+                cipher[i] = (char)r;
+
+                c++;
+            }
+
+            return cipher;
         }
 
         /**
@@ -102,7 +130,31 @@ public class Cryptography
          */
         public static char[] decrypt(char[] cipherText, char[] key)
         {
-            return null;
+            int a = cipherText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            char[]  message = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int) key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                int r = ((int)cipherText[i]) - asck[c];
+
+                if(r < 32)
+                    r = 127 - (32 - r);
+
+                message[i] = (char)r;
+
+                c++;
+            }
+
+            return message;
         }
 
         /***********------------File Cryptography------------***********/
@@ -151,9 +203,9 @@ public class Cryptography
                         progress.getDialogStage().close();
                         FileOutputStream fos = new FileOutputStream(plainFile.getAbsoluteFile() + ".cg");
                         fos.write(task.getValue());
-                    fos.write(cipherData);
+                        fos.write(cipherData);
 
-                fos.close();
+                        fos.close();
                         plainFile.delete();
                     }
                     catch (FileNotFoundException ex)
@@ -184,6 +236,7 @@ public class Cryptography
                 ex.printStackTrace();
                 Cryptography.handleException(ex);
             }
+
             catch (Exception ex)
             {
                 ex.printStackTrace();
@@ -293,7 +346,26 @@ public class Cryptography
          */
         public static char[] encrypt(char[] plainText, char[] key)
         {
-            return null;
+            int a = plainText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            char[] cipher = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int)key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                cipher[i] = (char) (plainText[i] ^ asck[c]);
+
+                c++;
+            }
+
+            return cipher;
         }
 
         /**
@@ -304,7 +376,26 @@ public class Cryptography
          */
         public static char[] decrypt(char[] cipherText, char[] key)
         {
-            return null;
+            int a = cipherText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            char[]  message = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int)key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                message[i] = (char)((int)cipherText[i] ^ asck[c]);
+
+                c++;
+            }
+
+            return message;
         }
 
         /***********------------File Cryptography------------***********/
@@ -549,7 +640,38 @@ public class Cryptography
          */
         public static char[] encrypt(char[] plainText, char[] key)
         {
-            return null;
+            int a = plainText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            int step1;
+            int step2;
+            int step3 = b + 1;
+            char[] cipher = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int)key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                if(step3>a)
+                    step3 = 0;
+
+                step1 = (char)((int)plainText[i] ^ asck[c]);
+                step2 = step1 + b;
+
+                if(step2>126)
+                    step2 = 127 - step2 + 32;
+
+                cipher[step3] = (char)step2;
+
+                c++;
+                step3++;
+            }
+            return cipher;
         }
 
         /**
@@ -560,7 +682,39 @@ public class Cryptography
          */
         public static char[] decrypt(char[] cipherText, char[] key)
         {
-            return null;
+            int a = cipherText.length;
+            int b = key.length;
+            int c = 0;
+            int[] asck = new int[b];
+            int step1 = b + 1;
+            int step2;
+            int step3;
+            char[] message = new char[a];
+
+            for(int j=0; j<b; j++)
+                asck[j] = (int)key[j];
+
+            for(int i=0; i<a; i++)
+            {
+                if(c == b)
+                    c = 0;
+
+                if(step1>a)
+                    step1 = 0;
+
+                step2 = (int)cipherText[step1] - b;
+
+                if(step2<32)
+                    step2 = 127 - (32-step2);
+
+                step3 = step2 ^ asck[c];
+
+                message[i] = (char)step3;
+
+                c++;
+                step1++;
+            }
+            return message;
         }
 
         /***********------------File Cryptography------------***********/

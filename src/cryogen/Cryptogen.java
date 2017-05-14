@@ -22,6 +22,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -113,20 +114,22 @@ public class Cryptogen implements Initializable
     {
         try
         {
-            /*plainPassword = pswPassword.getText().toCharArray();
-            if (new String(plainPassword).equals(""))
+            char[] cipherMessage = null;
+
+            char[] newMessage = txtMessage.getText().toCharArray();
+            if (new String(newMessage).equals(""))
             {
-                pswPassword.requestFocus();
+                txtMessage.requestFocus();
                 throw new Exception("Please Enter a Password");
             }
-            key = pswKey.getText().toCharArray();
+            char[] key = txtKey.getText().toCharArray();
             if (new String(key).equals(""))
             {
-                pswKey.requestFocus();
+                txtKey.requestFocus();
                 throw new Exception("Please Enter a Key");
             }
 
-            int limit;
+            /*int limit;
             if(cbxCompact.isSelected())
                 limit = 12;
             else
@@ -146,6 +149,22 @@ public class Cryptogen implements Initializable
             Output pass = loader.<Output>getController();
             pass.initialize(cipherPassword);
             passWindow.showAndWait();*/
+
+            if (radVigenere.isSelected())
+            {
+                cipherMessage = Cryptography.VigenereCipher.encrypt(newMessage, key);
+                method = "Vigenère cipher.";
+            }
+            else if(radVernam.isSelected())
+            {
+                cipherMessage = Cryptography.VernamCipher.encrypt(newMessage, key);
+                method = "Vernam cipher.";
+            }
+            else if(radElephant.isSelected())
+            {
+                cipherMessage = Cryptography.ElephantCipher.encrypt(newMessage, key);
+                method = "Elephant cipher.";
+            }
         }
         catch (Exception ex)
         {
@@ -298,16 +317,14 @@ public class Cryptogen implements Initializable
             pneKey.getStyleClass().add("pneDefaultError");
             handleException(ex, "Error", "Empty Key Value", ex.getMessage());
         }
+        catch(OutOfMemoryError e)
+        {
+            e.printStackTrace();
+            Cryptography.handleException(null, "Out of Memory", "Out of Memory", "File too large, or restart the system.");
+        }
         catch (Exception ex)
         {
             handleException(ex);
-        }
-        finally
-        {
-            files = null;
-            pneFilePane.getStyleClass().remove("pneFilePaneDrag");
-            pneFilePane.getStyleClass().remove("pneFilePaneDropped");
-            pneFilePane.getStyleClass().add("pneFilePane");
         }
     }
 
@@ -321,7 +338,57 @@ public class Cryptogen implements Initializable
     {
         try
         {
+            char[] plainMesage = null;
 
+            char[] newMessage = txtMessage.getText().toCharArray();
+            if (new String(newMessage).equals(""))
+            {
+                txtMessage.requestFocus();
+                throw new Exception("Please Enter a Password");
+            }
+            char[] key = txtKey.getText().toCharArray();
+            if (new String(key).equals(""))
+            {
+                txtKey.requestFocus();
+                throw new Exception("Please Enter a Key");
+            }
+
+            /*int limit;
+            if(cbxCompact.isSelected())
+                limit = 12;
+            else
+                limit = 32;
+
+            cipherPassword = encrypt(plainPassword, key, limit);
+            if(cipherPassword == null)
+                throw new Exception("Error Occurred During Encryption");
+
+            Stage passWindow = new Stage(StageStyle.TRANSPARENT);
+            passWindow.getIcons().add(new Image(getClass().getResourceAsStream("/cryogen/icon.png")));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Output.fxml"));
+            passWindow.setHeight(186);
+            passWindow.setWidth(495);
+            passWindow.setResizable(false);
+            passWindow.setScene(new Scene((Pane)loader.load(), Color.TRANSPARENT));
+            Output pass = loader.<Output>getController();
+            pass.initialize(cipherPassword);
+            passWindow.showAndWait();*/
+
+            if (radVigenere.isSelected())
+            {
+                plainMesage = Cryptography.VigenereCipher.decrypt(newMessage, key);
+                method = "Vigenère cipher.";
+            }
+            else if(radVernam.isSelected())
+            {
+                plainMesage = Cryptography.VernamCipher.decrypt(newMessage, key);
+                method = "Vernam cipher.";
+            }
+            else if(radElephant.isSelected())
+            {
+                plainMesage = Cryptography.ElephantCipher.decrypt(newMessage, key);
+                method = "Elephant cipher.";
+            }
         }
         catch (Exception ex)
         {
@@ -385,16 +452,14 @@ public class Cryptogen implements Initializable
             txtKey.getStyleClass().add("txtDefaultError");
             handleException(ex, "Error", "Empty Key Value", ex.getMessage());
         }
+        catch(OutOfMemoryError e)
+        {
+            e.printStackTrace();
+            Cryptography.handleException(null, "Out of Memory", "Out of Memory", "File too large, or restart the system.");
+        }
         catch (Exception ex)
         {
             handleException(ex);
-        }
-        finally
-        {
-            files = null;
-            pneFilePane.getStyleClass().remove("pneFilePaneDrag");
-            pneFilePane.getStyleClass().remove("pneFilePaneDropped");
-            pneFilePane.getStyleClass().add("pneFilePane");
         }
     }
 
@@ -669,7 +734,8 @@ public class Cryptogen implements Initializable
 
     protected void handleException(Exception ex, String title, String header, String content)
     {
-        ex.printStackTrace();
+        if(ex != null)
+            ex.printStackTrace();
         Alert error = new Alert(Alert.AlertType.ERROR, content);
         error.initModality(Modality.APPLICATION_MODAL);
         error.initOwner(getCurrentStage());
